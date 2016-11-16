@@ -4,10 +4,12 @@
 public class Database {
     private int readers = 0;
     private int writers = 0;
+    private int readWant = 0;
 
 
     public void read(int number) {
-        System.out.println("Ich " + number + " möchte lesen!");
+        System.out.println("Reader " + number + " möchte lesen!");
+        readWant++;
         synchronized (this) {
 
             while (writers > 0)
@@ -31,14 +33,21 @@ public class Database {
                 this.notifyAll();
             }
             System.out.println("Reader " + number + " stoppt lesen.");
-
+            readWant--;
         }
     }
 
 
     public synchronized void write(int number) {
-        System.out.println("Ich " + number + " möchte schreiben!");
+        System.out.println("Writer " + number + " möchte schreiben!");
         writers++;
+        while (readWant != 0) {
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         while (this.readers != 0) {
             try {
                 this.wait();
