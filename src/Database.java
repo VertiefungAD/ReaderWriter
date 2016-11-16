@@ -11,7 +11,6 @@ public class Database {
         System.out.println("Reader " + number + " möchte lesen!");
         readWant++;
         synchronized (this) {
-
             while (writers > 0)
                 try {
                     wait();
@@ -29,9 +28,8 @@ public class Database {
         }
         synchronized (this) {
             this.readers--;
-            if (this.readers == 0) {
-                this.notifyAll();
-            }
+            if (writers > 0) this.readers = 0;
+            if (this.readers == 0) this.notifyAll();
             System.out.println("Reader " + number + " stoppt lesen.");
             readWant--;
         }
@@ -41,6 +39,7 @@ public class Database {
     public synchronized void write(int number) {
         System.out.println("Writer " + number + " möchte schreiben!");
         writers++;
+
         while (readWant != 0) {
             try {
                 wait();
@@ -48,7 +47,9 @@ public class Database {
                 e.printStackTrace();
             }
         }
+
         while (this.readers != 0) {
+            readWant = 0;
             try {
                 this.wait();
             } catch (InterruptedException e) {
