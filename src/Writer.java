@@ -17,8 +17,10 @@ public class Writer extends Thread {
             try {
                 Thread.sleep((int) (Math.random() * 5000));
             } catch (InterruptedException e) {
-                this.database.write(this.number);
+            e.getLocalizedMessage();
             }
+                this.database.write(this.number);
+
         }
     }
 }
