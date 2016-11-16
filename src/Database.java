@@ -2,36 +2,43 @@
  * Created by doetken on 16.11.2016.
  */
 public class Database {
-    private int readers;
-    private volatile boolean frei = true;
+    private int readers = 0;
+    private int writers = 0;
 
-    public Database() {
-        this.readers = 10;
-    }
 
     public void read(int number) {
-        while (this.frei) {
-            synchronized (this) {
-                this.readers++;
-                System.out.println("Reader " + number + " beginnt lesen.");
-            }
+        System.out.println("Ich " + number + " möchte lesen!");
+        synchronized (this) {
 
-            try {
-                Thread.sleep((int) (Math.random() * 5000));
-            } catch (InterruptedException e) {
-                e.getLocalizedMessage();
-            }
-            synchronized (this) {
-                this.readers--;
-                if (this.readers == 0) this.notifyAll();
-                System.out.println("Reader " + number + " stoppt lesen.");
+            while (writers > 0)
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            this.readers++;
+            System.out.println("Reader " + number + " beginnt lesen.");
+        }
 
+        try {
+            Thread.sleep((int) (Math.random() * 5000));
+        } catch (InterruptedException e) {
+            e.getLocalizedMessage();
+        }
+        synchronized (this) {
+            this.readers--;
+            if (this.readers == 0) {
+                this.notifyAll();
             }
+            System.out.println("Reader " + number + " stoppt lesen.");
+
         }
     }
 
+
     public synchronized void write(int number) {
-        this.frei = false;
+        System.out.println("Ich " + number + " möchte schreiben!");
+        writers++;
         while (this.readers != 0) {
             try {
                 this.wait();
@@ -39,8 +46,16 @@ public class Database {
                 e.getLocalizedMessage();
             }
             System.out.println("Writer " + number + " beginnt schreiben.");
-            this.notifyAll();
 
+            try {
+                Thread.sleep((int) (Math.random() * 5000));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("Writer " + number + " stoppt schreiben.");
+            writers--;
+            this.notifyAll();
         }
+
     }
 }
